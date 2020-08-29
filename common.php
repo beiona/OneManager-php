@@ -615,10 +615,10 @@ function config_oauth()
     if (getConfig('Drive_ver')=='CN') {
         // CN 21Vianet
         // https://portal.azure.cn
-        //$_SERVER['client_id'] = '04c3ca0b-8d07-4773-85ad-98b037d25631';
-        //$_SERVER['client_secret'] = 'h8@B7kFVOmj0+8HKBWeNTgl@pU/z4yLB'; // expire 20200902
-        $_SERVER['client_id'] = 'b15f63f5-8b72-48b5-af69-8cab7579bff7';
-        $_SERVER['client_secret'] = '0IIuZ1Kcq_YI3NrkZFwsniEo~BoP~8_M22';
+        $_SERVER['client_id'] = '04c3ca0b-8d07-4773-85ad-98b037d25631';
+        $_SERVER['client_secret'] = 'h8@B7kFVOmj0+8HKBWeNTgl@pU/z4yLB'; // expire 20200902
+        //$_SERVER['client_id'] = 'b15f63f5-8b72-48b5-af69-8cab7579bff7';
+        //$_SERVER['client_secret'] = '0IIuZ1Kcq_YI3NrkZFwsniEo~BoP~8_M22';
         $_SERVER['oauth_url'] = 'https://login.partner.microsoftonline.cn/common/oauth2/v2.0/';
         $_SERVER['api_url'] = 'https://microsoftgraph.chinacloudapi.cn/v1.0/me/drive/root';
         $_SERVER['scope'] = 'https://microsoftgraph.chinacloudapi.cn/Files.ReadWrite.All offline_access';
@@ -690,23 +690,42 @@ function path_format($path)
     return $path;
 }
 
-function spurlencode($str,$split='')
+function spurlencode($str, $split='')
 {
-    $str = str_replace(' ', '%20',$str);
     $tmp='';
     if ($split!='') {
-        $tmparr=explode($split,$str);
-        for($x=0;$x<count($tmparr);$x++) {
-            if ($tmparr[$x]!='') $tmp .= $split . urlencode($tmparr[$x]);
+        $tmparr=explode($split, $str);
+        foreach ($tmparr as $str1) {
+            $tmp .= urlencode($str1) . $split;
         }
+        $tmp = substr($tmp, 0, -strlen($split));
     } else {
         $tmp = urlencode($str);
     }
-    $tmp = str_replace('%2520', '%20',$tmp);
+    $tmp = str_replace('+', '%20',$tmp);
     return $tmp;
 }
 
-function equal_replace($str, $add = false)
+function base64y_encode($str)
+{
+    $str = base64_encode($str);
+    while (substr($str,-1)=='=') $str=substr($str,0,-1);
+    while (strpos($str, '+')!==false) $str = str_replace('+', '-', $str);
+    while (strpos($str, '/')!==false) $str = str_replace('/', '_', $str);
+    return $str;
+}
+
+function base64y_decode($str)
+{
+    while (strpos($str, '_')!==false) $str = str_replace('_', '/', $str);
+    while (strpos($str, '-')!==false) $str = str_replace('-', '+', $str);
+    while (strlen($str)%4) $str .= '=';
+    $str = base64_decode($str);
+    if (strpos($str, '%')!==false) $str = urldecode($str);
+    return $str;
+}
+
+function equal_replace_($str, $add = false)
 {
     if ($add) {
         while(strlen($str)%4) $str .= '=';
@@ -2540,8 +2559,8 @@ function render_list($path = '', $files = '')
         $html = $tmp[0];
         $tmp = splitfirst($tmp[1], '<!--PathArrayEnd-->');
         $PathArrayStr = $tmp[0];
-        $tmp_path = str_replace('%23', '#', str_replace('&','&amp;', $path));
-        $tmp_url = $_SERVER['base_disk_path'];
+        $tmp_url = $_SERVER['base_path'];
+        $tmp_path = str_replace('&','&amp;', substr(urldecode($_SERVER['PHP_SELF']), strlen($tmp_url)));
         while ($tmp_path!='') {
             $tmp1 = splitfirst($tmp_path, '/');
             $folder1 = $tmp1[0];
@@ -2578,8 +2597,8 @@ function render_list($path = '', $files = '')
         $tmp = splitfirst($html, '<!--BackArrowStart-->');
         $html = $tmp[0];
         $tmp = splitfirst($tmp[1], '<!--BackArrowEnd-->');
-        if ($path !== '/') {
-            $current_url = $_SERVER['PHP_SELF'];
+        $current_url = path_format($_SERVER['PHP_SELF'] . '/');
+        if ($current_url !== $_SERVER['base_path']) {
             while (substr($current_url, -1) === '/') {
                 $current_url = substr($current_url, 0, -1);
             }
