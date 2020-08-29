@@ -1646,7 +1646,7 @@ function get_refresh_token()
         <div id="morecustom" style="display:none;">
             <label><input type="checkbox" name="Drive_custom" onclick="document.getElementById(\'secret\').style.display=(this.checked?\'\':\'none\');">'.getconstStr('CustomIdSecret').'</label><br>
             <div id="secret" style="display:none;margin:10px 35px">
-                return uri: https://onemange1.herokuapp.com//<br>
+                return uri: https://onemange1.herokuapp.com/<br>
                 client_id:<input type="text" name="client_id" placeholder="a1b2c345-90ab-cdef-ghij-klmnopqrstuv"><br>
                 client_secret:<input type="text" name="client_secret"><br>
             </div>
